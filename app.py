@@ -4,209 +4,293 @@ from aadhaar_utils import create_signing_request_MOCK
 import time
 
 # ---------------------------------------------------------
-# 1. PAGE CONFIG & SESSION STATE
+# 1. PAGE CONFIG
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="SiteSign Pro",
+    page_title="SiteSign | Enterprise",
     page_icon="🛡️",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# Initialize Session State (To remember where we are)
+# Initialize Session State
 if 'step' not in st.session_state:
     st.session_state.step = 1
 if 'otp_sent' not in st.session_state:
     st.session_state.otp_sent = False
-if 'signed' not in st.session_state:
-    st.session_state.signed = False
 
 # ---------------------------------------------------------
-# 2. CSS STYLING (High Contrast Fix)
+# 2. PROFESSIONAL CSS (The "SaaS" Look)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-    /* 1. Force the main background to a neutral light gray */
+    /* IMPORT FONTS */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* REMOVE STREAMLIT BRANDING */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* MAIN BACKGROUND */
     .stApp {
-        background-color: #f0f2f6;
-    }
-    
-    /* 2. Fix the Header Card (White Background, Black Text) */
-    .header-card {
-        background-color: #ffffff;
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 24px;
-        border-bottom: 4px solid #3b82f6; /* Blue bottom border */
-    }
-    
-    /* 3. Force Text Colors inside the Header to be Dark */
-    .header-card h2 {
-        color: #1e293b !important;
-        margin: 0;
-    }
-    .header-card p {
-        color: #64748b !important;
-        margin: 5px 0 0 0;
+        background-color: #f1f5f9; /* Light Blue-Gray */
     }
 
-    /* 4. Fix the Success/Certificate Box */
-    .success-box {
-        background-color: #ffffff;
-        border: 2px solid #10b981;
-        padding: 30px;
-        border-radius: 15px;
-        text-align: center;
-        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1);
-    }
-    .success-box h2 {
-        color: #059669 !important; /* Dark Green */
-    }
-    .success-box p, .success-box div {
-        color: #374151 !important; /* Dark Gray */
+    /* CARD DESIGN (Glassmorphism Lite) */
+    .css-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
     }
 
-    /* 5. Fix Streamlit's Native Widgets (Input fields) */
-    .stTextInput label, .stNumberInput label, .stTextArea label, .stCameraInput label {
-        color: #1e293b !important; /* Dark Blue-Gray */
-        font-weight: 600;
+    /* INPUT FIELDS (Mobile Friendly) */
+    .stTextInput input, .stNumberInput input, .stTextArea textarea {
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        padding: 10px;
+        font-size: 16px;
     }
-    
-    /* 6. Buttons */
+    .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    /* BUTTONS */
     div.stButton > button {
-        background-color: #3b82f6;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
+        width: 100%;
+        border-radius: 10px;
         font-weight: 600;
+        padding: 0.75rem 1rem;
+        font-size: 16px;
+        border: none;
+        transition: all 0.2s;
     }
-    div.stButton > button:hover {
+    
+    /* Primary Button (Blue) */
+    div.stButton > button:first-child {
         background-color: #2563eb;
         color: white;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
     }
+    div.stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+    }
+
+    /* PROGRESS STEPS */
+    .step-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        padding: 0 10px;
+    }
+    .step-active {
+        color: #2563eb;
+    }
+    
+    /* SUCCESS CERTIFICATE STYLE */
+    .certificate {
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        border: 2px solid #22c55e;
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .badge {
+        background: #dcfce7;
+        color: #166534;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. HEADER
+# 3. APP HEADER
 # ---------------------------------------------------------
+
+# Simple, Clean Logo Area
 st.markdown("""
-<div class="header-card">
-    <h2>🛡️ SiteSign Pro</h2>
-    <p>Legal Payment Protection for Contractors</p>
+<div style="text-align: center; margin-bottom: 20px;">
+    <h2 style="color: #0f172a; margin:0; font-weight: 800; letter-spacing: -1px;">🛡️ SiteSign</h2>
+    <p style="color: #64748b; font-size: 14px; margin-top: 5px;">Enterprise Grade Payment Protection</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Progress Bar
-if st.session_state.step == 1:
-    st.progress(33)
-elif st.session_state.step == 2:
-    st.progress(66)
-else:
-    st.progress(100)
+# Visual Step Indicator
+step_html = f"""
+<div class="step-indicator">
+    <span class="{'step-active' if st.session_state.step >= 1 else ''}">1. EVIDENCE</span>
+    <span class="{'step-active' if st.session_state.step >= 2 else ''}">2. APPROVAL</span>
+    <span class="{'step-active' if st.session_state.step >= 3 else ''}">3. LOCKED</span>
+</div>
+<div style="height: 4px; background: #e2e8f0; border-radius: 2px; margin-bottom: 20px; overflow: hidden;">
+    <div style="height: 100%; width: {st.session_state.step * 33}%; background: #2563eb; transition: width 0.5s;"></div>
+</div>
+"""
+st.markdown(step_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. STEP 1: CAPTURE
+# 4. STEP 1: CAPTURE EVIDENCE
 # ---------------------------------------------------------
 if st.session_state.step == 1:
-    st.markdown("### 📸 Step 1: Capture Details")
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.markdown("#### 📸 New Change Order")
+    st.markdown("<p style='color:#64748b; font-size:14px;'>Capture site conditions to lock in extra payment.</p>", unsafe_allow_html=True)
     
-    with st.container():
-        photo = st.camera_input("Take a photo of the site")
-        desc = st.text_area("Description of Work", placeholder="e.g. Extra plumbing for kitchen island...")
-        cost = st.number_input("Agreed Extra Cost (₹)", min_value=0, step=500)
-        client_phone = st.text_input("Client Phone Number", placeholder="9876543210")
-
+    photo = st.camera_input("Site Photo")
+    
+    st.write("") # Spacer
+    desc = st.text_area("Scope Description", height=80, placeholder="e.g. Client requested Italian Marble instead of Tiles...")
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        cost = st.number_input("Extra Cost (₹)", min_value=0, step=1000)
+    with c2:
+        client_phone = st.text_input("Client Mobile", placeholder="98765...")
+    
+    st.write("")
+    if st.button("Proceed to Sign ➡️"):
         if photo and desc and cost > 0 and client_phone:
-            if st.button("Next: Verify & Sign ➡️", type="primary"):
-                # Save details to state
-                st.session_state.photo_bytes = photo.getvalue()
-                st.session_state.photo_hash = get_file_hash(photo.getvalue())
-                st.session_state.desc = desc
-                st.session_state.cost = cost
-                st.session_state.phone = client_phone
-                st.session_state.step = 2
-                st.rerun()
+            st.session_state.photo_bytes = photo.getvalue()
+            st.session_state.photo_hash = get_file_hash(photo.getvalue())
+            st.session_state.desc = desc
+            st.session_state.cost = cost
+            st.session_state.phone = client_phone
+            st.session_state.step = 2
+            st.rerun()
+        else:
+            st.error("Please fill all details.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Trust Signals
+    st.markdown("""
+    <div style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 20px;">
+        🔒 Encrypted • 🇮🇳 Govt. Admissible • ⚡ Instant
+    </div>
+    """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 5. STEP 2: CLIENT SIGNATURE (OTP)
+# 5. STEP 2: AUTHORIZATION
 # ---------------------------------------------------------
-if st.session_state.step == 2:
-    st.markdown("### ✍️ Step 2: Client Authorization")
+elif st.session_state.step == 2:
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
     
-    # Review Box
-    with st.container():
-        st.info(f"**Review Order:** {st.session_state.desc} | **₹{st.session_state.cost}**")
-        
-    col1, col2 = st.columns(2)
-    
-    # Send OTP Button
+    # Summary Ticket
+    st.markdown(f"""
+    <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="color: #64748b; font-size: 12px;">ITEM</span>
+            <span style="color: #0f172a; font-weight: 600; font-size: 12px;">CHANGE ORDER #001</span>
+        </div>
+        <div style="color: #334155; font-weight: 500; margin-bottom: 10px;">{st.session_state.desc}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+            <span style="color: #64748b;">Total Amount</span>
+            <span style="color: #2563eb; font-weight: 700; font-size: 18px;">₹{st.session_state.cost:,}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     if not st.session_state.otp_sent:
-        st.write("Ask the client to approve this amount.")
-        if st.button("📲 Send Aadhaar OTP"):
-            with st.spinner("Connecting to UIDAI..."):
-                time.sleep(1.5) # Fake delay
+        st.write("**Authorize Payment**")
+        st.write("Send a secure Aadhaar link to the client.")
+        if st.button("📱 Send OTP via Digio"):
+            with st.spinner("Connecting to UIDAI Server..."):
+                time.sleep(1.5)
                 st.session_state.otp_sent = True
                 st.rerun()
-    
-    # Enter OTP Section
-    else:
-        st.success(f"OTP sent to {st.session_state.phone}")
-        otp_input = st.text_input("Enter the 4-digit OTP received", max_chars=4)
         
-        if st.button("✅ Verify & Sign", type="primary"):
-            if otp_input: # In real app, check if otp_input == real_otp
-                with st.spinner("Verifying Biometrics..."):
-                    time.sleep(1)
-                    st.session_state.signed = True
+        if st.button("⬅️ Edit Details"):
+            st.session_state.step = 1
+            st.rerun()
+
+    else:
+        st.success(f"OTP Sent to {st.session_state.phone}")
+        otp = st.text_input("Enter 4-Digit OTP", max_chars=4, placeholder="XXXX")
+        
+        if st.button("✅ Verify & Lock Contract"):
+            if otp:
+                with st.spinner("Verifying Biometrics & Minting to Polygon..."):
+                    time.sleep(2)
                     st.session_state.step = 3
                     st.rerun()
             else:
-                st.error("Please enter the OTP.")
+                st.warning("Enter OTP to proceed.")
+                
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 6. STEP 3: BLOCKCHAIN CERTIFICATE
+# 6. STEP 3: SUCCESS CERTIFICATE
 # ---------------------------------------------------------
-if st.session_state.step == 3:
+elif st.session_state.step == 3:
     
-    # Anchor to Blockchain (Only once)
     if 'tx_link' not in st.session_state:
-        with st.spinner("Minting Immutable Proof on Polygon..."):
-            st.session_state.tx_link = anchor_to_polygon(
-                st.session_state.photo_hash, 
-                st.session_state.desc, 
-                st.session_state.cost
-            )
+        st.session_state.tx_link = anchor_to_polygon(
+            st.session_state.photo_hash, 
+            st.session_state.desc, 
+            st.session_state.cost
+        )
+
+    st.balloons()
     
+    # Certificate UI
     st.markdown(f"""
-    <div class="success-box">
-        <h2>PAYMENT LOCKED 🔒</h2>
-        <p>This document is now legally binding.</p>
-        <div style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:15px; text-align:left;">
-            <p><b>📅 Date:</b> 10 Dec 2025, 10:42 AM</p>
-            <p><b>💰 Amount:</b> ₹{st.session_state.cost}</p>
-            <p><b>📝 Work:</b> {st.session_state.desc}</p>
-            <p><b>🆔 Digital ID:</b> {st.session_state.photo_hash[:12]}...</p>
+    <div class="certificate">
+        <div class="badge">✓ LEGALLY BINDING</div>
+        <h2 style="color: #15803d; margin-top: 5px;">Payment Secured</h2>
+        <p style="color: #374151; font-size: 14px;">This agreement has been permanently anchored to the Polygon Blockchain.</p>
+        
+        <div style="margin: 20px 0; text-align: left; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <p style="margin: 5px 0; font-size: 14px;"><b>👤 Signer:</b> Verified Aadhaar User</p>
+            <p style="margin: 5px 0; font-size: 14px;"><b>💰 Value:</b> ₹{st.session_state.cost:,}</p>
+            <p style="margin: 5px 0; font-size: 14px;"><b>🕒 Time:</b> {time.strftime("%d %b %Y, %I:%M %p")}</p>
+            <p style="margin: 5px 0; font-size: 10px; color: #94a3b8;">HASH: {st.session_state.photo_hash[:16]}...</p>
         </div>
-        <br>
-        <a href="{st.session_state.tx_link}" target="_blank" style="
-            background-color:#1e293b; 
-            color:white; 
-            padding:12px 24px; 
-            text-decoration:none; 
-            border-radius:6px; 
-            font-weight:600; 
-            display:inline-block;">
-            View Proof on Polygon Scan ↗
+
+        <a href="{st.session_state.tx_link}" target="_blank" style="text-decoration: none;">
+            <button style="
+                background: #0f172a; 
+                color: white; 
+                border: none; 
+                padding: 12px 20px; 
+                border-radius: 8px; 
+                font-weight: 600; 
+                cursor: pointer; 
+                width: 100%;">
+                View Blockchain Proof ↗
+            </button>
         </a>
     </div>
-    <br>
-    <p style="text-align:center; color:#94a3b8; font-size:12px;">
-        Legal Note: This digital record is admissible under Section 65B of the Indian Evidence Act.
-    </p>
     """, unsafe_allow_html=True)
     
-    if st.button("Start New Order"):
+    st.markdown("""
+    <div style="text-align: center; margin-top: 20px;">
+        <p style="font-size: 11px; color: #64748b;">
+            Admissible under <b>Section 65B, Indian Evidence Act 1872</b>.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("Start New Project"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
