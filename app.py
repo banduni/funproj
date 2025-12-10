@@ -20,57 +20,80 @@ if 'otp_sent' not in st.session_state:
 if 'signed' not in st.session_state:
     st.session_state.signed = False
 
-# Custom CSS for Professional Look
+# ---------------------------------------------------------
+# 2. CSS STYLING (High Contrast Fix)
+# ---------------------------------------------------------
 st.markdown("""
 <style>
-    /* Clean Font & Background */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
-    }
+    /* 1. Force the main background to a neutral light gray */
     .stApp {
-        background-color: #f4f6f9;
+        background-color: #f0f2f6;
     }
     
-    /* Header Card */
+    /* 2. Fix the Header Card (White Background, Black Text) */
     .header-card {
-        background: white;
-        padding: 20px;
+        background-color: #ffffff;
+        padding: 24px;
         border-radius: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-        text-align: center;
-        border-bottom: 3px solid #3b82f6;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+        border-bottom: 4px solid #3b82f6; /* Blue bottom border */
     }
     
-    /* Success Certificate */
+    /* 3. Force Text Colors inside the Header to be Dark */
+    .header-card h2 {
+        color: #1e293b !important;
+        margin: 0;
+    }
+    .header-card p {
+        color: #64748b !important;
+        margin: 5px 0 0 0;
+    }
+
+    /* 4. Fix the Success/Certificate Box */
     .success-box {
-        background: #ffffff;
-        border: 1px solid #d1fae5;
-        border-top: 4px solid #10b981;
+        background-color: #ffffff;
+        border: 2px solid #10b981;
         padding: 30px;
-        border-radius: 10px;
+        border-radius: 15px;
         text-align: center;
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1);
+    }
+    .success-box h2 {
+        color: #059669 !important; /* Dark Green */
+    }
+    .success-box p, .success-box div {
+        color: #374151 !important; /* Dark Gray */
+    }
+
+    /* 5. Fix Streamlit's Native Widgets (Input fields) */
+    .stTextInput label, .stNumberInput label, .stTextArea label, .stCameraInput label {
+        color: #1e293b !important; /* Dark Blue-Gray */
+        font-weight: 600;
     }
     
-    /* Buttons */
+    /* 6. Buttons */
     div.stButton > button {
-        width: 100%;
-        font-weight: 600;
-        border-radius: 6px;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
         padding: 0.5rem 1rem;
+        font-weight: 600;
+    }
+    div.stButton > button:hover {
+        background-color: #2563eb;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. HEADER
+# 3. HEADER
 # ---------------------------------------------------------
 st.markdown("""
 <div class="header-card">
-    <h2 style="margin:0; color:#1e293b;">🛡️ SiteSign Pro</h2>
-    <p style="margin:5px; color:#64748b; font-size:14px;">Legal Payment Protection for Contractors</p>
+    <h2>🛡️ SiteSign Pro</h2>
+    <p>Legal Payment Protection for Contractors</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -83,7 +106,7 @@ else:
     st.progress(100)
 
 # ---------------------------------------------------------
-# 3. STEP 1: CAPTURE
+# 4. STEP 1: CAPTURE
 # ---------------------------------------------------------
 if st.session_state.step == 1:
     st.markdown("### 📸 Step 1: Capture Details")
@@ -106,7 +129,7 @@ if st.session_state.step == 1:
                 st.rerun()
 
 # ---------------------------------------------------------
-# 4. STEP 2: CLIENT SIGNATURE (OTP)
+# 5. STEP 2: CLIENT SIGNATURE (OTP)
 # ---------------------------------------------------------
 if st.session_state.step == 2:
     st.markdown("### ✍️ Step 2: Client Authorization")
@@ -142,7 +165,7 @@ if st.session_state.step == 2:
                 st.error("Please enter the OTP.")
 
 # ---------------------------------------------------------
-# 5. STEP 3: BLOCKCHAIN CERTIFICATE
+# 6. STEP 3: BLOCKCHAIN CERTIFICATE
 # ---------------------------------------------------------
 if st.session_state.step == 3:
     
@@ -157,9 +180,9 @@ if st.session_state.step == 3:
     
     st.markdown(f"""
     <div class="success-box">
-        <h2 style="color:#10b981; margin-top:0;">PAYMENT LOCKED 🔒</h2>
-        <p style="color:#374151;">This document is now legally binding.</p>
-        <div style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:15px; text-align:left; font-size:14px;">
+        <h2>PAYMENT LOCKED 🔒</h2>
+        <p>This document is now legally binding.</p>
+        <div style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:15px; text-align:left;">
             <p><b>📅 Date:</b> 10 Dec 2025, 10:42 AM</p>
             <p><b>💰 Amount:</b> ₹{st.session_state.cost}</p>
             <p><b>📝 Work:</b> {st.session_state.desc}</p>
