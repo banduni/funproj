@@ -41,26 +41,27 @@ st.markdown("""
         background-color: #f1f5f9; /* Light Blue-Gray */
     }
 
-    /* CARD DESIGN (Glassmorphism Lite) */
+    /* CARD DESIGN */
     .css-card {
         background: white;
         padding: 2rem;
         border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
         border: 1px solid #e2e8f0;
     }
 
-    /* INPUT FIELDS (Mobile Friendly) */
+    /* INPUT FIELDS */
     .stTextInput input, .stNumberInput input, .stTextArea textarea {
         border-radius: 10px;
         border: 1px solid #cbd5e1;
         padding: 10px;
         font-size: 16px;
+        color: #0f172a; /* Dark Text */
     }
-    .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    .stTextInput label, .stNumberInput label, .stTextArea label {
+        color: #334155 !important;
+        font-weight: 600;
     }
 
     /* BUTTONS */
@@ -74,15 +75,13 @@ st.markdown("""
         transition: all 0.2s;
     }
     
-    /* Primary Button (Blue) */
+    /* Primary Button */
     div.stButton > button:first-child {
         background-color: #2563eb;
         color: white;
-        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
     }
     div.stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+        background-color: #1d4ed8;
     }
 
     /* PROGRESS STEPS */
@@ -99,15 +98,13 @@ st.markdown("""
         color: #2563eb;
     }
     
-    /* SUCCESS CERTIFICATE STYLE */
+    /* CERTIFICATE STYLE */
     .certificate {
         background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
         border: 2px solid #22c55e;
         border-radius: 16px;
         padding: 2rem;
         text-align: center;
-        position: relative;
-        overflow: hidden;
     }
     .badge {
         background: #dcfce7;
@@ -127,10 +124,10 @@ st.markdown("""
 # 3. APP HEADER
 # ---------------------------------------------------------
 
-# Simple, Clean Logo Area
+# Simple Logo Area
 st.markdown("""
 <div style="text-align: center; margin-bottom: 20px;">
-    <h2 style="color: #0f172a; margin:0; font-weight: 800; letter-spacing: -1px;">🛡️ SiteSign</h2>
+    <h2 style="color: #0f172a; margin:0; font-weight: 800;">🛡️ SiteSign</h2>
     <p style="color: #64748b; font-size: 14px; margin-top: 5px;">Enterprise Grade Payment Protection</p>
 </div>
 """, unsafe_allow_html=True)
@@ -149,15 +146,15 @@ step_html = f"""
 st.markdown(step_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. STEP 1: CAPTURE EVIDENCE (Updated with Form)
+# 4. STEP 1: CAPTURE EVIDENCE (With Form)
 # ---------------------------------------------------------
 if st.session_state.step == 1:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.markdown("#### 📸 New Change Order")
+    st.markdown("<p style='color:#64748b; font-size:14px;'>Capture site conditions to lock in extra payment.</p>", unsafe_allow_html=True)
     
-    # We use a FORM so hitting 'Enter' key submits the data
+    # FORM START
     with st.form("entry_form", clear_on_submit=False):
-        
         photo = st.camera_input("Site Photo")
         st.write("") 
         
@@ -167,12 +164,11 @@ if st.session_state.step == 1:
         with c1:
             cost = st.number_input("Extra Cost (₹)", min_value=0, step=1000)
         with c2:
-            # This is the last field, so hitting 'Enter' here will trigger the button below
             client_phone = st.text_input("Client Mobile", placeholder="98765...")
         
         st.write("")
         
-        # This is the "Enter" button for the whole form
+        # Form Submit Button
         submitted = st.form_submit_button("Proceed to Sign ➡️")
         
         if submitted:
@@ -185,9 +181,16 @@ if st.session_state.step == 1:
                 st.session_state.step = 2
                 st.rerun()
             else:
-                st.error("Please fill all details (Photo, Desc, Cost, Phone).")
-
+                st.error("Please fill all details.")
+    
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Trust Signals
+    st.markdown("""
+    <div style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 20px;">
+        🔒 Encrypted • 🇮🇳 Govt. Admissible • ⚡ Instant
+    </div>
+    """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 5. STEP 2: AUTHORIZATION
@@ -213,6 +216,8 @@ elif st.session_state.step == 2:
     if not st.session_state.otp_sent:
         st.write("**Authorize Payment**")
         st.write("Send a secure Aadhaar link to the client.")
+        
+        # Using a form here isn't strictly necessary but keeps UI consistent
         if st.button("📱 Send OTP via Digio"):
             with st.spinner("Connecting to UIDAI Server..."):
                 time.sleep(1.5)
@@ -225,16 +230,20 @@ elif st.session_state.step == 2:
 
     else:
         st.success(f"OTP Sent to {st.session_state.phone}")
-        otp = st.text_input("Enter 4-Digit OTP", max_chars=4, placeholder="XXXX")
         
-        if st.button("✅ Verify & Lock Contract"):
-            if otp:
-                with st.spinner("Verifying Biometrics & Minting to Polygon..."):
-                    time.sleep(2)
-                    st.session_state.step = 3
-                    st.rerun()
-            else:
-                st.warning("Enter OTP to proceed.")
+        # OTP Entry Form
+        with st.form("otp_form"):
+            otp = st.text_input("Enter 4-Digit OTP", max_chars=4, placeholder="XXXX")
+            verify_btn = st.form_submit_button("✅ Verify & Lock Contract")
+            
+            if verify_btn:
+                if otp:
+                    with st.spinner("Verifying Biometrics & Minting to Polygon..."):
+                        time.sleep(2)
+                        st.session_state.step = 3
+                        st.rerun()
+                else:
+                    st.warning("Enter OTP to proceed.")
                 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -250,8 +259,6 @@ elif st.session_state.step == 3:
             st.session_state.cost
         )
 
-    st.balloons()
-    
     # Certificate UI
     st.markdown(f"""
     <div class="certificate">
@@ -260,9 +267,9 @@ elif st.session_state.step == 3:
         <p style="color: #374151; font-size: 14px;">This agreement has been permanently anchored to the Polygon Blockchain.</p>
         
         <div style="margin: 20px 0; text-align: left; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <p style="margin: 5px 0; font-size: 14px;"><b>👤 Signer:</b> Verified Aadhaar User</p>
-            <p style="margin: 5px 0; font-size: 14px;"><b>💰 Value:</b> ₹{st.session_state.cost:,}</p>
-            <p style="margin: 5px 0; font-size: 14px;"><b>🕒 Time:</b> {time.strftime("%d %b %Y, %I:%M %p")}</p>
+            <p style="margin: 5px 0; font-size: 14px; color:#334155;"><b>👤 Signer:</b> Verified Aadhaar User</p>
+            <p style="margin: 5px 0; font-size: 14px; color:#334155;"><b>💰 Value:</b> ₹{st.session_state.cost:,}</p>
+            <p style="margin: 5px 0; font-size: 14px; color:#334155;"><b>🕒 Time:</b> {time.strftime("%d %b %Y, %I:%M %p")}</p>
             <p style="margin: 5px 0; font-size: 10px; color: #94a3b8;">HASH: {st.session_state.photo_hash[:16]}...</p>
         </div>
 
@@ -294,4 +301,3 @@ elif st.session_state.step == 3:
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
-
