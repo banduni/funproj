@@ -149,45 +149,45 @@ step_html = f"""
 st.markdown(step_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. STEP 1: CAPTURE EVIDENCE
+# 4. STEP 1: CAPTURE EVIDENCE (Updated with Form)
 # ---------------------------------------------------------
 if st.session_state.step == 1:
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
     st.markdown("#### 📸 New Change Order")
-    st.markdown("<p style='color:#64748b; font-size:14px;'>Capture site conditions to lock in extra payment.</p>", unsafe_allow_html=True)
     
-    photo = st.camera_input("Site Photo")
-    
-    st.write("") # Spacer
-    desc = st.text_area("Scope Description", height=80, placeholder="e.g. Client requested Italian Marble instead of Tiles...")
-    
-    c1, c2 = st.columns(2)
-    with c1:
-        cost = st.number_input("Extra Cost (₹)", min_value=0, step=1000)
-    with c2:
-        client_phone = st.text_input("Client Mobile", placeholder="98765...")
-    
-    st.write("")
-    if st.button("Proceed to Sign ➡️"):
-        if photo and desc and cost > 0 and client_phone:
-            st.session_state.photo_bytes = photo.getvalue()
-            st.session_state.photo_hash = get_file_hash(photo.getvalue())
-            st.session_state.desc = desc
-            st.session_state.cost = cost
-            st.session_state.phone = client_phone
-            st.session_state.step = 2
-            st.rerun()
-        else:
-            st.error("Please fill all details.")
-    
+    # We use a FORM so hitting 'Enter' key submits the data
+    with st.form("entry_form", clear_on_submit=False):
+        
+        photo = st.camera_input("Site Photo")
+        st.write("") 
+        
+        desc = st.text_area("Scope Description", height=80, placeholder="e.g. Client requested Italian Marble...")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            cost = st.number_input("Extra Cost (₹)", min_value=0, step=1000)
+        with c2:
+            # This is the last field, so hitting 'Enter' here will trigger the button below
+            client_phone = st.text_input("Client Mobile", placeholder="98765...")
+        
+        st.write("")
+        
+        # This is the "Enter" button for the whole form
+        submitted = st.form_submit_button("Proceed to Sign ➡️")
+        
+        if submitted:
+            if photo and desc and cost > 0 and client_phone:
+                st.session_state.photo_bytes = photo.getvalue()
+                st.session_state.photo_hash = get_file_hash(photo.getvalue())
+                st.session_state.desc = desc
+                st.session_state.cost = cost
+                st.session_state.phone = client_phone
+                st.session_state.step = 2
+                st.rerun()
+            else:
+                st.error("Please fill all details (Photo, Desc, Cost, Phone).")
+
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Trust Signals
-    st.markdown("""
-    <div style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 20px;">
-        🔒 Encrypted • 🇮🇳 Govt. Admissible • ⚡ Instant
-    </div>
-    """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 5. STEP 2: AUTHORIZATION
@@ -294,3 +294,4 @@ elif st.session_state.step == 3:
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
+
